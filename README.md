@@ -1,10 +1,10 @@
 # CyclistChartsField
 
-Cyclist charts data filed for Garmin Connect IQ store.
-This is a free complex data field for the Fenix 3 watch that shows multiple values and some charts on a single field. 
-CyclistChartsField is open source and its code resides at github: https://github.com/vovan-/cyclist-datafiled-garmin
+CyclistChartsField Data Filed for Garmin Connect IQ store.
+This is a free complex Data Field for the Fenix 3 watch that shows multiple values and two charts on a single field. 
+CyclistChartsField is open source, its code can be found on github: https://github.com/vovan-/cyclist-datafiled-garmin
 
-The datafield is based on two other datafileds. Special thanks for developers of the following datafileds:
+The Data Field is based on two other Data Fields. Special thanks for developers of the following ConnectIQ projects:
 https://apps.garmin.com/en-US/apps/aacfc2de-b61e-40cc-a83d-52f46f9d263d
 https://apps.garmin.com/en-US/apps/dc4c99a1-0886-42f5-8605-f952956e715b
 
@@ -13,6 +13,8 @@ Release versions are published in the [Garmin App Store](https://apps.garmin.com
 ===============================================
 
 ## Feedback
+
+Forum thread TBD
 
 ===============================================
 
@@ -29,7 +31,7 @@ Release versions are published in the [Garmin App Store](https://apps.garmin.com
 
 ===============================================
 
-## Install Instructions
+## Installation Instructions
 A Data Field needs to be set up within the settings for a given activity (like Run)
 
 * Long Press UP
@@ -49,10 +51,9 @@ A Data Field needs to be set up within the settings for a given activity (like R
 
 ## Usage
 Start Bike activity.
-You should see the CyclistChartsField datafield.
+You should see the CyclistChartsField Data Field.
 
 ===============================================
-
 
 ## Changelog 1.0.0
 Initial commit
