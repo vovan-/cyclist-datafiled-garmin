@@ -1,5 +1,7 @@
 # CyclistChartsField
 
+![CyclistChartsField Screenshot](/docs/img/CyclistChartsField-emulator.png)
+
 CyclistChartsField Data Filed for Garmin Connect IQ store.
 This is a free complex Data Field for the Fenix 3 watch that shows multiple values and two charts on a single field. 
 CyclistChartsField is open source, its code can be found on github: https://github.com/vovan-/cyclist-datafiled-garmin
