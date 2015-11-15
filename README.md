@@ -42,14 +42,14 @@ A Data Field needs to be set up within the settings for a given activity (like R
 * Select single field
 * Field 1
 * Select ConnectIQ Fields
-* Select CyclistField
+* Select CyclistChartsField
 * Long Press DOWN to go back to watch face
 
 ===============================================
 
 ## Usage
 Start Bike activity.
-You should see the CyclistField datafield.
+You should see the CyclistChartsField datafield.
 
 ===============================================
 
