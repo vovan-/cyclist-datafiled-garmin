@@ -10,24 +10,23 @@ The Data Field is based on two other Data Fields. Special thanks for developers 
 https://apps.garmin.com/en-US/apps/aacfc2de-b61e-40cc-a83d-52f46f9d263d
 https://apps.garmin.com/en-US/apps/dc4c99a1-0886-42f5-8605-f952956e715b
 
-Release versions are published in the [Garmin App Store](https://apps.garmin.com/en-US/apps/)
+Release versions are published in the [Garmin App Store](https://apps.garmin.com/en-US/apps/82e3141d-9846-4bcf-bf72-f8bda597efc0)
 
 ===============================================
 
 ## Feedback
-
-Forum thread TBD
+https://forums.garmin.com/showthread.php?333992-Data-Field-CyclistChartsField
 
 ===============================================
 
 ## Features
-* Speed: speed in km/h;
+* Speed: speed in km/h or mi/h based on system settings;
 * Average speed: average speed over the whole activity;
 * Cadence: your current cadence with a chart on the background (last minute data);
 * HR: your current heart rate with a chart on the background (last minute data);
 * Distance: elapsed distance in km or miles based on system settings;
 * Timer: duration of the activity in [hh:]mm:ss;
-* GPS: GPS status - poor/acceptable/good signal;
+* GPS: GPS status - antenna bar;
 * Battery: visualization of battery percentage as indicator bar;
 * Time of the day;
 
@@ -57,5 +56,10 @@ You should see the CyclistChartsField Data Field.
 
 ===============================================
 
-## Changelog 1.0.0
-Initial commit
+## Changelog 1.1.0
+* Support for 12/24h time format added based on system settings;
+* Gps signal changed from text to antenna bar;
+* Both km and mi unit settings are now supported based on system settings;
+
+## Changelog 1.0.0b
+* Initial commit
