@@ -15,8 +15,13 @@ class CyclistView extends Ui.DataField {
     hidden const HEADER_FONT = Graphics.FONT_XTINY;
     hidden const VALUE_FONT = Graphics.FONT_NUMBER_MEDIUM;
 
+    // Config
+    hidden var is24Hour = true;
+    hidden var metricUnits = true;
+    hidden var metersInOneDistanceUnit = 1000;
     hidden var cad = 0;
     hidden var cal = 0;
+    hidden var temp = 0;
     hidden var speed = 0.0;
     hidden var avgSpeed = 0.0;
     hidden var hr = 0;
@@ -32,8 +37,8 @@ class CyclistView extends Ui.DataField {
 
     //! The given info object contains all the current workout
     function compute(info) {
-    	speed = calcNullable(info.currentSpeed, 0.0) * 3.6;
-    	avgSpeed = calcNullable(info.averageSpeed, 0.0) * 3.6;
+    	speed = calcNullable(info.currentSpeed, 0.0);
+    	avgSpeed = calcNullable(info.averageSpeed, 0.0);
     	cad = calcNullable(info.currentCadence, 0);
     	cal = calcNullable(info.calories, 0);
     	hr = calcNullable(info.currentHeartRate, 0);
@@ -48,7 +53,8 @@ class CyclistView extends Ui.DataField {
         onUpdateCharts(dc);
         draw(dc);
         drawGrid(dc);
-        drawGps(dc);   
+        drawGps(dc);
+        drawBattery(dc);
     }
 
  	function initialize()
@@ -78,8 +84,18 @@ class CyclistView extends Ui.DataField {
         y1 = dc.getHeight() / 4.7 + 5;
         y2 = dc.getHeight() - y1 + 10;
         x = dc.getWidth() / 2;
+        populateConfigFromDeviceSettings();
     }
-    
+
+    function populateConfigFromDeviceSettings() {
+        metricUnits = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
+        if (metricUnits) {
+            metersInOneDistanceUnit = 1000;
+        } else {
+            metersInOneDistanceUnit = 1610;
+        }
+        is24Hour = System.getDeviceSettings().is24Hour;
+    }
     //! API functions
     
     //! function setLayout(layout) {}
@@ -102,31 +118,42 @@ class CyclistView extends Ui.DataField {
         setColor(dc, Graphics.COLOR_DK_GRAY);
         dc.drawText(x, 8, HEADER_FONT, "TOD", CENTER);
         dc.drawText(dc.getWidth() * 0.80, y2 - 10, HEADER_FONT, "TIMER", CENTER);
-        dc.drawText(dc.getWidth() * 0.28 - 6, y2 - 10, HEADER_FONT, "SPD (km/h)", CENTER);
+        dc.drawText(dc.getWidth() * 0.28 - 6, y2 - 10, HEADER_FONT, "SPD (" +  (metricUnits ? "km" : "mi")  + "/h)", CENTER);
         
         setColor(dc, Graphics.COLOR_BLACK);
-        dc.drawText(x, 38, Graphics.FONT_MEDIUM, getFormattedDate(Time.now()), CENTER);
+
+        var clockTime = System.getClockTime();
+        var time, ampm, timeX;
+        if (is24Hour) {
+            time = Lang.format("$1$:$2$", [clockTime.hour, clockTime.min.format("%.2d")]);
+            ampm = "";
+            timeX = x;
+        } else {
+            time = Lang.format("$1$:$2$", [calculateAmPmHour(clockTime.hour), clockTime.min.format("%.2d")]);
+            ampm = (clockTime.hour < 12) ? "am" : "pm";
+            timeX = x - 10;
+        }
+        dc.drawText(timeX, 38, Graphics.FONT_MEDIUM, time, CENTER);
+        dc.drawText(timeX + 35, 42, HEADER_FONT, ampm, CENTER);
         dc.drawText(dc.getWidth() * 0.79, y + 21, VALUE_FONT, elapsedTime, CENTER);
-        dc.drawText(dc.getWidth() * 0.2, y + 21, VALUE_FONT, speed.format("%2.1f"), CENTER);
+        dc.drawText(dc.getWidth() * 0.2, y + 21, VALUE_FONT, calculateSpeed(speed).format("%2.1f"), CENTER);
 
         txtVsOutline(x, y1 + 21, VALUE_FONT, cad.format("%d"), CENTER, Graphics.COLOR_BLACK, dc, 1);
         setColor(dc, Graphics.COLOR_ORANGE);
         dc.drawText(x, y - 10, HEADER_FONT, "CAD", CENTER);
         setColor(dc, Graphics.COLOR_DK_BLUE);
-        dc.drawText(dc.getWidth() * 0.26 + 48, y + 21, VALUE_FONT, avgSpeed.format("%2.1f"), CENTER);
+        dc.drawText(dc.getWidth() * 0.26 + 48, y + 21, VALUE_FONT, calculateSpeed(avgSpeed).format("%2.1f"), CENTER);
         dc.drawText(dc.getWidth() * 0.28 + 45, y2 - 10, HEADER_FONT, "AVG", CENTER);
         txtVsOutline(dc.getWidth() / 4.7, y1 + 21, VALUE_FONT, hr.format("%d"), CENTER, Graphics.COLOR_BLACK, dc, 1);
         setColor(dc, Graphics.COLOR_DK_RED);
         dc.drawText(dc.getWidth() / 4.7 - 2, y - 10, HEADER_FONT, "HR " + ((hr > 0) ? (chartHR.min.format("%d") + "-" + chartHR.max.format("%d")) : ""), CENTER);
         setColor(dc, Graphics.COLOR_DK_GREEN);
         dc.drawText(dc.getWidth() * 0.79, y1 + 21, VALUE_FONT, distance, CENTER);
-        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, "DIST (km)", CENTER);
+        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, "DIST (" + (metricUnits ? "km" : "mi") + ")", CENTER);
 
         setColor(dc, Graphics.COLOR_GREEN);
         dc.drawText(x, y2 + 13, Graphics.FONT_MEDIUM, cal.format("%d"), CENTER);
         dc.drawText(x, y2 + 31, HEADER_FONT, "CAL", CENTER);
-        setColor(dc, Graphics.COLOR_BLACK);
-        drawBattery(dc);
     }
 
     function txtVsOutline(x, y, font, text, pos, color, dc, delta) {
@@ -143,20 +170,50 @@ class CyclistView extends Ui.DataField {
     	dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     }
 
+
     function drawGps(dc) {
-        if (gpsSignal == 3 || gpsSignal == 4) {
-            setColor(dc, Graphics.COLOR_DK_GREEN);
+//        if (gpsSignal == 3 || gpsSignal == 4) {
+//            setColor(dc, Graphics.COLOR_DK_GREEN);
+//        } else {
+//            setColor(dc, Graphics.COLOR_DK_RED);
+//        }
+//        dc.drawText(x + 63, 43, HEADER_FONT, "GPS", CENTER);
+//        setColor(dc, Graphics.COLOR_BLACK);
+       // gps
+        if (gpsSignal < 2) {
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
+        } else if (gpsSignal == 2) {
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
+        } else if (gpsSignal == 3) {
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN, Graphics.COLOR_LT_GRAY);
         } else {
-            setColor(dc, Graphics.COLOR_DK_RED);
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN);
         }
-        dc.drawText(x + 50, 37, HEADER_FONT, "GPS", CENTER);
-        setColor(dc, Graphics.COLOR_BLACK);
+    }
+
+
+    function drawGpsSign(dc, xStart, yStart, color1, color2, color3) {
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawRectangle(xStart - 1, yStart + 11, 8, 10);
+        dc.setColor(color1, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(xStart, yStart + 12, 6, 8);
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawRectangle(xStart + 6, yStart + 7, 8, 14);
+        dc.setColor(color2, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(xStart + 7, yStart + 8, 6, 12);
+
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawRectangle(xStart + 13, yStart + 3, 8, 18);
+        dc.setColor(color3, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(xStart + 14, yStart + 4, 6, 16);
     }
     
     function drawBattery(dc) {
-        var yStart = 30;
-        var xStart = x - 68;
-        
+        var yStart = 34;
+        var xStart = x - 78;
+
+        setColor(dc, Graphics.COLOR_BLACK);
         dc.drawRectangle(xStart, yStart, 29, 15);
         dc.drawRectangle(xStart + 1, yStart + 1, 27, 13);
         dc.fillRectangle(xStart + 29, yStart + 3, 2, 9);
@@ -181,9 +238,9 @@ class CyclistView extends Ui.DataField {
 
     function calculateDistance(info) {
         if (info.elapsedDistance != null && info.elapsedDistance > 0) {
-            var distanceKm = info.elapsedDistance / 1000;
-            var distanceHigh = distanceKm >= 100.0;
-            var distanceFullString = distanceKm.toString();
+            var distanceInUnit = info.elapsedDistance / metersInOneDistanceUnit;
+            var distanceHigh = distanceInUnit >= 100.0;
+            var distanceFullString = distanceInUnit.toString();
             var commaPos = distanceFullString.find(".");
             var floatNumber = 3;
             if (distanceHigh) {
@@ -212,11 +269,18 @@ class CyclistView extends Ui.DataField {
 //            var options = {:seconds => (info.elapsedTime / 1000)};
         }
     }
-    
-    function getFormattedDate(moment) {
-        var date = Calendar.info(moment, 0);
-        var formattedDate = format("$1$:$2$",[date.hour, date.min.format("%02d")]);
-        return formattedDate;
+
+    function calculateSpeed(speedMetersPerSecond) {
+        var kmOrMilesPerHour = speedMetersPerSecond * 3600.0 / metersInOneDistanceUnit;
+        return kmOrMilesPerHour;
     }
 
+    function calculateAmPmHour(hour) {
+        if (hour == 0) {
+            return 12;
+        } else if (hour > 12) {
+            return hour - 12;
+        }
+        return hour;
+    }
 }
