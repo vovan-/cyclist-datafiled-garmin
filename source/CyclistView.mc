@@ -17,8 +17,8 @@ class CyclistView extends Ui.DataField {
 
     // Config
     hidden var is24Hour = true;
-    hidden var metricUnits = true;
-    hidden var metersInOneDistanceUnit = 1000;
+    hidden var isDistanceUnitsMetric = true;
+    hidden var isSpeedUnitsMetric = true;
     hidden var cad = 0;
     hidden var cal = 0;
     hidden var temp = 0;
@@ -79,21 +79,17 @@ class CyclistView extends Ui.DataField {
     }
 
     function onLayout(dc) {
+        populateConfigFromDeviceSettings();
         // calculate values for grid
         y = dc.getHeight() / 2 + 5;
         y1 = dc.getHeight() / 4.7 + 5;
         y2 = dc.getHeight() - y1 + 10;
         x = dc.getWidth() / 2;
-        populateConfigFromDeviceSettings();
     }
 
     function populateConfigFromDeviceSettings() {
-        metricUnits = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
-        if (metricUnits) {
-            metersInOneDistanceUnit = 1000;
-        } else {
-            metersInOneDistanceUnit = 1610;
-        }
+        isDistanceUnitsMetric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
+        isSpeedUnitsMetric = System.getDeviceSettings().paceUnits == System.UNIT_METRIC;
         is24Hour = System.getDeviceSettings().is24Hour;
     }
     //! API functions
@@ -118,7 +114,7 @@ class CyclistView extends Ui.DataField {
         setColor(dc, Graphics.COLOR_DK_GRAY);
         dc.drawText(x, 8, HEADER_FONT, "TOD", CENTER);
         dc.drawText(dc.getWidth() * 0.80, y2 - 10, HEADER_FONT, "TIMER", CENTER);
-        dc.drawText(dc.getWidth() * 0.28 - 6, y2 - 10, HEADER_FONT, "SPD (" +  (metricUnits ? "km" : "mi")  + "/h)", CENTER);
+        dc.drawText(dc.getWidth() * 0.28 - 6, y2 - 10, HEADER_FONT, "SPD (" +  (isSpeedUnitsMetric ? "km" : "mi")  + "/h)", CENTER);
         
         setColor(dc, Graphics.COLOR_BLACK);
 
@@ -149,7 +145,7 @@ class CyclistView extends Ui.DataField {
         dc.drawText(dc.getWidth() / 4.7 - 2, y - 10, HEADER_FONT, "HR " + ((hr > 0) ? (chartHR.min.format("%d") + "-" + chartHR.max.format("%d")) : ""), CENTER);
         setColor(dc, Graphics.COLOR_DK_GREEN);
         dc.drawText(dc.getWidth() * 0.79, y1 + 21, VALUE_FONT, distance, CENTER);
-        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, "DIST (" + (metricUnits ? "km" : "mi") + ")", CENTER);
+        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, "DIST (" + (isDistanceUnitsMetric ? "km" : "mi") + ")", CENTER);
 
         setColor(dc, Graphics.COLOR_GREEN);
         dc.drawText(x, y2 + 13, Graphics.FONT_MEDIUM, cal.format("%d"), CENTER);
@@ -238,7 +234,7 @@ class CyclistView extends Ui.DataField {
 
     function calculateDistance(info) {
         if (info.elapsedDistance != null && info.elapsedDistance > 0) {
-            var distanceInUnit = info.elapsedDistance / metersInOneDistanceUnit;
+            var distanceInUnit = info.elapsedDistance / (isDistanceUnitsMetric ? 1000 : 1610);
             var distanceHigh = distanceInUnit >= 100.0;
             var distanceFullString = distanceInUnit.toString();
             var commaPos = distanceFullString.find(".");
@@ -271,7 +267,7 @@ class CyclistView extends Ui.DataField {
     }
 
     function calculateSpeed(speedMetersPerSecond) {
-        var kmOrMilesPerHour = speedMetersPerSecond * 3600.0 / metersInOneDistanceUnit;
+        var kmOrMilesPerHour = speedMetersPerSecond * 3600.0 / (isSpeedUnitsMetric ? 1000 : 1610);
         return kmOrMilesPerHour;
     }
 

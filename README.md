@@ -4,7 +4,7 @@
 
 CyclistChartsField Data Filed for Garmin Connect IQ store.
 This is a free complex Data Field for the Fenix 3 watch that shows multiple values and two charts on a single field. 
-CyclistChartsField is open source, its code can be found on github: https://github.com/vovan-/cyclist-datafiled-garmin
+CyclistChartsField is open source, its code can be found at github: https://github.com/vovan-/cyclist-datafiled-garmin
 
 The Data Field is based on two other Data Fields. Special thanks for developers of the following ConnectIQ projects:
 https://apps.garmin.com/en-US/apps/aacfc2de-b61e-40cc-a83d-52f46f9d263d
@@ -15,7 +15,10 @@ Release versions are published in the [Garmin App Store](https://apps.garmin.com
 ===============================================
 
 ## Feedback
+
+Any feedback, questions and answers please post on the corresponding forum thread (Garmin users are by default a Garmin Forum user):
 https://forums.garmin.com/showthread.php?333992-Data-Field-CyclistChartsField
+Developers have no access to provide response for Ratings and Reviews on Garmin App store.
 
 ===============================================
 
@@ -29,11 +32,12 @@ https://forums.garmin.com/showthread.php?333992-Data-Field-CyclistChartsField
 * GPS: GPS status - antenna bar;
 * Battery: visualization of battery percentage as indicator bar;
 * Time of the day;
+* Unit settings applied only before starting the activity. During activity settings won't apply.
 
 ===============================================
 
 ## Installation Instructions
-A Data Field needs to be set up within the settings for a given activity (like Run)
+A Data Field needs to be set up within the settings for a given activity (like Bike)
 
 * Long Press UP
 * Settings
@@ -47,6 +51,8 @@ A Data Field needs to be set up within the settings for a given activity (like R
 * Select ConnectIQ Fields
 * Select CyclistChartsField
 * Long Press DOWN to go back to watch face
+FAQ: How to add custom data field to app in fenix 3?
+https://www.facebook.com/GarminFenix3/posts/441344592657118
 
 ===============================================
 
@@ -55,6 +61,10 @@ Start Bike activity.
 You should see the CyclistChartsField Data Field.
 
 ===============================================
+
+## Changelog 1.1.1
+* Fixed a potential issue with km/mi units settings, thanks to "xemoterp" for the comment: https://github.com/vovan-/cyclist-datafiled-garmin/issues/5#issuecomment-158239406
+* Now speed and distance units settings may be configured separately.
 
 ## Changelog 1.1.0
 * Support for 12/24h time format added based on system settings;
