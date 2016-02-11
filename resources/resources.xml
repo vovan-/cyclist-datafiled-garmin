@@ -1,5 +1,43 @@
 <resources>
     <string id="AppName">CyclistChartsField</string>
-<!-- 
+    <string id="elevationChart">Elevation chart</string>
+    <string id="elevation">Elevation</string>
+    <string id="distance">Distance</string>
+    <string id="avgHR">Average HR</string>
+    <string id="avgPWR">Average PWR</string>
+    <string id="distanceChart">Distance and elevation chart</string>
+    <string id="avgHRChart">Average HR chart</string>
+    <string id="avgPWRChart">Average PWR chart</string>
+    <string id="cal">Calories</string>
+    <string id="UpperRightTitle">Upper right value</string>
+    <string id="UpperRightPrompt">Upper right</string>
+    <string id="BottomTitle">Bottom value</string>
+    <string id="BottomPrompt">Bottom</string>
+   
+    <properties>
+        <property id="upperRightValue" type="number">0</property>
+        <property id="bottomValue" type="number">0</property>
+    </properties>
+
+<settings>
+    <setting propertyKey="@Properties.upperRightValue" title="@Strings.UpperRightTitle" prompt="@Strings.UpperRightPrompt">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.distanceChart</listEntry>
+            <listEntry value="1">@Strings.elevationChart</listEntry>
+            <listEntry value="2">@Strings.avgHRChart</listEntry>
+            <listEntry value="3">@Strings.avgPWRChart</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.bottomValue" title="@Strings.BottomTitle" prompt="@Strings.BottomPrompt">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.distance</listEntry>
+            <listEntry value="1">@Strings.elevation</listEntry>
+            <listEntry value="2">@Strings.avgHR</listEntry>
+            <listEntry value="3">@Strings.avgPWR</listEntry>            
+            <listEntry value="4">@Strings.cal</listEntry>
+        </settingConfig>
+    </setting>
+    </settings>
+<!--  	
     <bitmap id="LauncherIcon" filename="images/launcher_icon.png" /> -->
 </resources>

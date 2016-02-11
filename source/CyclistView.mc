@@ -17,15 +17,19 @@ class CyclistView extends Ui.DataField {
 
     // Config
     hidden var is24Hour = true;
-    hidden var isDistanceUnitsMetric = true;
-    hidden var isSpeedUnitsMetric = true;
+    hidden var isDistMetric = true;
+    hidden var isElevMetric = true;
+    hidden var isSpdMetric = true;
     hidden var cad = 0;
     hidden var cal = 0;
     hidden var temp = 0;
     hidden var speed = 0.0;
     hidden var avgSpeed = 0.0;
+    hidden var avgHR = 0.0;
+    hidden var avgPWR = 0.0;
+    hidden var elev = 0.0;
     hidden var hr = 0;
-    hidden var distance = "0:00";
+    hidden var distance = "0.00";
     hidden var elapsedTime = "0:00";
     hidden var gpsSignal = 0; //Signal 0 not avail ... 4 good
     hidden var x;
@@ -34,6 +38,10 @@ class CyclistView extends Ui.DataField {
     hidden var y2;
     var chartHR;
     var chartCAD;
+    var chartCustom;
+
+    var upperRightValue = -1;
+    var bottomValue = -1;
 
     //! The given info object contains all the current workout
     function compute(info) {
@@ -42,14 +50,39 @@ class CyclistView extends Ui.DataField {
     	cad = calcNullable(info.currentCadence, 0);
     	cal = calcNullable(info.calories, 0);
     	hr = calcNullable(info.currentHeartRate, 0);
-        calculateDistance(info);
+    	avgHR = calcNullable(info.averageHeartRate, 0);
+    	avgPWR = calcNullable(info.averagePower, 0);
+    	elev = calcNullable(info.altitude, 0.0);
+
+        if (info.elapsedDistance != null && info.elapsedDistance > 0) {
+            distance = calcUnit(info.elapsedDistance, isDistMetric, 1.0/1000, 1.0/1610);
+        }
+        elev = calcUnit(elev, isElevMetric, 1, 3.28084);
         calculateElapsedTime(info);
         gpsSignal = info.currentLocationAccuracy;
         chartHR.new_value(hr);
         chartCAD.new_value(cad);
+        var value = 0.0;
+        if (upperRightValue == 0 || upperRightValue == 1) {
+            if (elev instanceof Toybox.Lang.String) {
+                value = elev.toFloat();
+            } else {
+                value = elev;
+            }
+        } else if (upperRightValue == 2) {
+            value = avgHR;
+        } else if (upperRightValue == 3) {
+            value = avgPWR;
+        }
+        chartCustom.new_value(value);
     }
     
     function onUpdate(dc) {
+    //TODO REMOVE, debug config
+        bottomValue = Application.getApp().getProperty("bottomValue");
+        upperRightValue = Application.getApp().getProperty("upperRightValue");        
+        //TODO to here
+
         onUpdateCharts(dc);
         draw(dc);
         drawGrid(dc);
@@ -59,10 +92,14 @@ class CyclistView extends Ui.DataField {
 
  	function initialize()
     {
+        bottomValue = Application.getApp().getProperty("bottomValue");
+        upperRightValue = Application.getApp().getProperty("upperRightValue");
         chartHR = new Chart();
         chartHR.set_max_range_minutes(2);
         chartCAD = new Chart();
         chartCAD.set_max_range_minutes(2);
+        chartCustom = new Chart();
+        chartCustom.set_max_range_minutes(2);
     }
 
     //! Update the view
@@ -76,6 +113,10 @@ class CyclistView extends Ui.DataField {
         chartCAD.draw(dc, [dc.getWidth() - 135, 53, dc.getWidth() - 84, dc.getHeight() - 120],
                    Graphics.COLOR_BLACK, Graphics.COLOR_ORANGE, 0,
                    true, false, true);
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        chartCustom.draw(dc, [dc.getWidth() - 81, 53, dc.getWidth() - 1, dc.getHeight() - 120],
+                   Graphics.COLOR_BLACK, Graphics.COLOR_DK_GREEN, 0,
+                   true, false, true);
     }
 
     function onLayout(dc) {
@@ -88,9 +129,11 @@ class CyclistView extends Ui.DataField {
     }
 
     function populateConfigFromDeviceSettings() {
-        isDistanceUnitsMetric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
-        isSpeedUnitsMetric = System.getDeviceSettings().paceUnits == System.UNIT_METRIC;
-        is24Hour = System.getDeviceSettings().is24Hour;
+        var devStn = System.getDeviceSettings();
+        isDistMetric = devStn.distanceUnits == System.UNIT_METRIC;
+        isElevMetric = devStn.elevationUnits == System.UNIT_METRIC;
+        isSpdMetric = devStn.paceUnits == System.UNIT_METRIC;
+        is24Hour = devStn.is24Hour;
     }
     //! API functions
     
@@ -114,7 +157,6 @@ class CyclistView extends Ui.DataField {
         setColor(dc, Graphics.COLOR_DK_GRAY);
         dc.drawText(x, 8, HEADER_FONT, "TOD", CENTER);
         dc.drawText(dc.getWidth() * 0.80, y2 - 10, HEADER_FONT, "TIMER", CENTER);
-        dc.drawText(dc.getWidth() * 0.28 - 6, y2 - 10, HEADER_FONT, "SPD (" +  (isSpeedUnitsMetric ? "km" : "mi")  + "/h)", CENTER);
         
         setColor(dc, Graphics.COLOR_BLACK);
 
@@ -132,24 +174,61 @@ class CyclistView extends Ui.DataField {
         dc.drawText(timeX, 38, Graphics.FONT_MEDIUM, time, CENTER);
         dc.drawText(timeX + 35, 42, HEADER_FONT, ampm, CENTER);
         dc.drawText(dc.getWidth() * 0.79, y + 21, VALUE_FONT, elapsedTime, CENTER);
-        dc.drawText(dc.getWidth() * 0.2, y + 21, VALUE_FONT, calculateSpeed(speed).format("%2.1f"), CENTER);
+        dc.drawText(dc.getWidth() * 0.26 + 48, y + 21, VALUE_FONT, calculateSpeed(speed).format("%2.1f"), CENTER);
+        dc.drawText(dc.getWidth() * 0.28 + 40, y2 - 10, HEADER_FONT, "SPD (" +  (isSpdMetric ? "km" : "mi")  + "/h)", CENTER);
 
         txtVsOutline(x, y1 + 21, VALUE_FONT, cad.format("%d"), CENTER, Graphics.COLOR_BLACK, dc, 1);
         setColor(dc, Graphics.COLOR_ORANGE);
         dc.drawText(x, y - 10, HEADER_FONT, "CAD", CENTER);
         setColor(dc, Graphics.COLOR_DK_BLUE);
-        dc.drawText(dc.getWidth() * 0.26 + 48, y + 21, VALUE_FONT, calculateSpeed(avgSpeed).format("%2.1f"), CENTER);
-        dc.drawText(dc.getWidth() * 0.28 + 45, y2 - 10, HEADER_FONT, "AVG", CENTER);
+
+        dc.drawText(dc.getWidth() * 0.28 - 16, y2 - 10, HEADER_FONT, "AVG", CENTER);
+        dc.drawText(dc.getWidth() * 0.2, y + 21, VALUE_FONT, calculateSpeed(avgSpeed).format("%2.1f"), CENTER);
         txtVsOutline(dc.getWidth() / 4.7, y1 + 21, VALUE_FONT, hr.format("%d"), CENTER, Graphics.COLOR_BLACK, dc, 1);
         setColor(dc, Graphics.COLOR_DK_RED);
         dc.drawText(dc.getWidth() / 4.7 - 2, y - 10, HEADER_FONT, "HR " + ((hr > 0) ? (chartHR.min.format("%d") + "-" + chartHR.max.format("%d")) : ""), CENTER);
         setColor(dc, Graphics.COLOR_DK_GREEN);
-        dc.drawText(dc.getWidth() * 0.79, y1 + 21, VALUE_FONT, distance, CENTER);
-        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, "DIST (" + (isDistanceUnitsMetric ? "km" : "mi") + ")", CENTER);
+        var value = "N/A";
+        var text = "N/A";
 
+        if (upperRightValue == 0) {
+            value = distance;
+            text = "DIST (" + (isDistMetric ? "km" : "mi") + ")";
+        } else if (upperRightValue == 1) {
+            value = elev;
+            text = "ALT (" + (isElevMetric ? "m" : "ft") + ")";
+        } else if (upperRightValue == 2) {
+            value = avgHR;
+            text = "AVG HR";
+        } else if (upperRightValue == 3) {
+            value = avgPWR;
+            text = "AVG PWR";
+        }
+        
+        txtVsOutline(dc.getWidth() * 0.79, y1 + 21, VALUE_FONT, value, CENTER, Graphics.COLOR_BLACK, dc, 1);
+        setColor(dc, Graphics.COLOR_DK_GREEN);
+        dc.drawText(dc.getWidth() * 0.80, y - 10, HEADER_FONT, text, CENTER);
+
+
+        if (bottomValue == 0) {
+	     	value = distance;
+            text = "DIST (" + (isDistMetric ? "km" : "mi") + ")";
+        } else if (bottomValue == 1) {
+            value = elev;
+            text = "ALT (" + (isDistMetric ? "m" : "ft") + ")";
+        } else if (bottomValue == 2) {
+            value = avgHR;
+            text = "AVG HR";
+        } else if (bottomValue == 3) {
+            value = avgPWR;
+            text = "AVG PWR";
+        } else if (bottomValue == 4) {
+            value = cal;
+            text = "CAL";
+        }
         setColor(dc, Graphics.COLOR_GREEN);
-        dc.drawText(x, y2 + 13, Graphics.FONT_MEDIUM, cal.format("%d"), CENTER);
-        dc.drawText(x, y2 + 31, HEADER_FONT, "CAL", CENTER);
+        dc.drawText(x, y2 + 13, Graphics.FONT_MEDIUM, value, CENTER);
+        dc.drawText(x, y2 + 31, HEADER_FONT, text, CENTER);
     }
 
     function txtVsOutline(x, y, font, text, pos, color, dc, delta) {
@@ -168,22 +247,14 @@ class CyclistView extends Ui.DataField {
 
 
     function drawGps(dc) {
-//        if (gpsSignal == 3 || gpsSignal == 4) {
-//            setColor(dc, Graphics.COLOR_DK_GREEN);
-//        } else {
-//            setColor(dc, Graphics.COLOR_DK_RED);
-//        }
-//        dc.drawText(x + 63, 43, HEADER_FONT, "GPS", CENTER);
-//        setColor(dc, Graphics.COLOR_BLACK);
-       // gps
         if (gpsSignal < 2) {
-            drawGpsSign(dc, 165, 29, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_BLUE, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
         } else if (gpsSignal == 2) {
-            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_BLUE, Graphics.COLOR_LT_GRAY, Graphics.COLOR_LT_GRAY);
         } else if (gpsSignal == 3) {
-            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN, Graphics.COLOR_LT_GRAY);
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_BLUE, Graphics.COLOR_BLUE, Graphics.COLOR_LT_GRAY);
         } else {
-            drawGpsSign(dc, 165, 29, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN, Graphics.COLOR_DK_GREEN);
+            drawGpsSign(dc, 165, 29, Graphics.COLOR_BLUE, Graphics.COLOR_BLUE, Graphics.COLOR_BLUE);
         }
     }
 
@@ -213,15 +284,10 @@ class CyclistView extends Ui.DataField {
         dc.drawRectangle(xStart, yStart, 29, 15);
         dc.drawRectangle(xStart + 1, yStart + 1, 27, 13);
         dc.fillRectangle(xStart + 29, yStart + 3, 2, 9);
-        setColor(dc, Graphics.COLOR_DK_GREEN);
+        setColor(dc, Graphics.COLOR_BLUE);
         for (var i = 0; i < (24 * System.getSystemStats().battery / 100); i = i + 3) {
             dc.fillRectangle(xStart + 3 + i, yStart + 3, 2, 9);    
         }
-        
-     //   setColor(dc, Graphics.COLOR_DK_GREEN);
-     //   dc.drawText(xStart+18, yStart+6, HEADER_FONT, format("$1$%", [battery.format("%d")]), CENTER);
-             
-     //   setColor(dc, Graphics.COLOR_BLACK);
     }
     	
 	function calcNullable(nullableValue, defaultValue) {
@@ -232,20 +298,18 @@ class CyclistView extends Ui.DataField {
    	   }	
 	}
 
-    function calculateDistance(info) {
-        if (info.elapsedDistance != null && info.elapsedDistance > 0) {
-            var distanceInUnit = info.elapsedDistance / (isDistanceUnitsMetric ? 1000 : 1610);
-            var distanceHigh = distanceInUnit >= 100.0;
-            var distanceFullString = distanceInUnit.toString();
-            var commaPos = distanceFullString.find(".");
-            var floatNumber = 3;
-            if (distanceHigh) {
-            	floatNumber = 2;
-            }
-            distance = distanceFullString.substring(0, commaPos + floatNumber);
+    function calcUnit(value, isMetric, metricCf, nonMetricCf) {
+        var valInUnit =  (isMetric ? value * metricCf : value * nonMetricCf);
+        var valHigh = valInUnit >= 100.0;
+        var valFullString = valInUnit.toString();
+        var commaPos = valFullString.find(".");
+        var floatNumber = 3;
+        if (valHigh) {
+            floatNumber = 2;
         }
+        return valFullString.substring(0, commaPos + floatNumber);
     }
-    
+
     function calculateElapsedTime(info) {
         if (info.elapsedTime != null && info.elapsedTime > 0) {
             var hours = null;
@@ -267,7 +331,7 @@ class CyclistView extends Ui.DataField {
     }
 
     function calculateSpeed(speedMetersPerSecond) {
-        var kmOrMilesPerHour = speedMetersPerSecond * 3600.0 / (isSpeedUnitsMetric ? 1000 : 1610);
+        var kmOrMilesPerHour = speedMetersPerSecond * 3600.0 / (isSpdMetric ? 1000 : 1610);
         return kmOrMilesPerHour;
     }
 

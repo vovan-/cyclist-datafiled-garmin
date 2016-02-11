@@ -2,6 +2,14 @@
 
 ![CyclistChartsField Screenshot](/docs/img/CyclistChartsField-emulator.png)
 
+## Feedback
+
+Any feedback, questions and answers please post on the corresponding forum thread (Garmin users are by default a Garmin Forum user):
+https://forums.garmin.com/showthread.php?333992-Data-Field-CyclistChartsField
+Developers have no access to provide response for Ratings and Reviews on Garmin App store.
+
+===============================================
+
 CyclistChartsField Data Filed for Garmin Connect IQ store.
 This is a free complex Data Field for the Fenix 3 watch that shows multiple values and two charts on a single field. 
 CyclistChartsField is open source, its code can be found at github: https://github.com/vovan-/cyclist-datafiled-garmin
@@ -14,13 +22,7 @@ Release versions are published in the [Garmin App Store](https://apps.garmin.com
 
 ===============================================
 
-## Feedback
 
-Any feedback, questions and answers please post on the corresponding forum thread (Garmin users are by default a Garmin Forum user):
-https://forums.garmin.com/showthread.php?333992-Data-Field-CyclistChartsField
-Developers have no access to provide response for Ratings and Reviews on Garmin App store.
-
-===============================================
 
 ## Features
 * Speed: speed in km/h or mi/h based on system settings;
@@ -61,6 +63,11 @@ Start Bike activity.
 You should see the CyclistChartsField Data Field.
 
 ===============================================
+
+## Changelog 2.0.1 11/02/2016
+* Configurable implementation. Two fields are now configurable:
+    bottom: distance, elevation, average HR, average PWR, calories
+    upper right: distance + elevation chart, elevation chart, average HR chart, average PWR chart
 
 ## Changelog 1.1.1
 * Fixed a potential issue with km/mi units settings, thanks to "xemoterp" for the comment: https://github.com/vovan-/cyclist-datafiled-garmin/issues/5#issuecomment-158239406
