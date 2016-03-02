@@ -22,12 +22,11 @@ class CyclistView extends Ui.DataField {
     hidden var isSpdMetric = true;
     hidden var cad = 0;
     hidden var cal = 0;
-    hidden var temp = 0;
     hidden var speed = 0.0;
     hidden var avgSpeed = 0.0;
-    hidden var avgHR = 0.0;
-    hidden var avgPWR = 0.0;
-    hidden var elev = 0.0;
+    hidden var avgHR = 0;
+    hidden var avgPWR = 0;
+    hidden var elev = "0.0";
     hidden var hr = 0;
     hidden var distance = "0.00";
     hidden var elapsedTime = "0:00";
@@ -40,8 +39,8 @@ class CyclistView extends Ui.DataField {
     var chartCAD;
     var chartCustom;
 
-    var upperRightValue = -1;
-    var bottomValue = -1;
+    var upperRightValue = 0;
+    var bottomValue = 0;
 
     //! The given info object contains all the current workout
     function compute(info) {
@@ -52,23 +51,15 @@ class CyclistView extends Ui.DataField {
     	hr = calcNullable(info.currentHeartRate, 0);
     	avgHR = calcNullable(info.averageHeartRate, 0);
     	avgPWR = calcNullable(info.averagePower, 0);
-    	elev = calcNullable(info.altitude, 0.0);
-
-        if (info.elapsedDistance != null && info.elapsedDistance > 0) {
-            distance = calcUnit(info.elapsedDistance, isDistMetric, 1.0/1000, 1.0/1610);
-        }
-        elev = calcUnit(elev, isElevMetric, 1, 3.28084);
+        distance = calcUnit(calcNullable(info.elapsedDistance, 0.0), isDistMetric, 1.0/1000, 1.0/1610);
+        elev = calcUnit(calcNullable(info.altitude, 0.0), isElevMetric, 1, 3.28084);
         calculateElapsedTime(info);
         gpsSignal = info.currentLocationAccuracy;
         chartHR.new_value(hr);
         chartCAD.new_value(cad);
-        var value = 0.0;
+        var value = null;
         if (upperRightValue == 0 || upperRightValue == 1) {
-            if (elev instanceof Toybox.Lang.String) {
-                value = elev.toFloat();
-            } else {
-                value = elev;
-            }
+            value = elev.toFloat();
         } else if (upperRightValue == 2) {
             value = avgHR;
         } else if (upperRightValue == 3) {
@@ -78,11 +69,6 @@ class CyclistView extends Ui.DataField {
     }
     
     function onUpdate(dc) {
-    //TODO REMOVE, debug config
-        bottomValue = Application.getApp().getProperty("bottomValue");
-        upperRightValue = Application.getApp().getProperty("upperRightValue");        
-        //TODO to here
-
         onUpdateCharts(dc);
         draw(dc);
         drawGrid(dc);
@@ -93,7 +79,13 @@ class CyclistView extends Ui.DataField {
  	function initialize()
     {
         bottomValue = Application.getApp().getProperty("bottomValue");
+        if (bottomValue == null) {
+            bottomValue = 0;
+        }
         upperRightValue = Application.getApp().getProperty("upperRightValue");
+        if (upperRightValue == null) {
+            upperRightValue = 4;
+        }
         chartHR = new Chart();
         chartHR.set_max_range_minutes(2);
         chartCAD = new Chart();
@@ -129,11 +121,10 @@ class CyclistView extends Ui.DataField {
     }
 
     function populateConfigFromDeviceSettings() {
-        var devStn = System.getDeviceSettings();
-        isDistMetric = devStn.distanceUnits == System.UNIT_METRIC;
-        isElevMetric = devStn.elevationUnits == System.UNIT_METRIC;
-        isSpdMetric = devStn.paceUnits == System.UNIT_METRIC;
-        is24Hour = devStn.is24Hour;
+        isDistMetric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;
+        isElevMetric = System.getDeviceSettings().elevationUnits == System.UNIT_METRIC;
+        isSpdMetric = System.getDeviceSettings().paceUnits == System.UNIT_METRIC;
+        is24Hour = System.getDeviceSettings().is24Hour;
     }
     //! API functions
     
@@ -198,10 +189,10 @@ class CyclistView extends Ui.DataField {
             value = elev;
             text = "ALT (" + (isElevMetric ? "m" : "ft") + ")";
         } else if (upperRightValue == 2) {
-            value = avgHR;
+            value = avgHR.toString();
             text = "AVG HR";
         } else if (upperRightValue == 3) {
-            value = avgPWR;
+            value = avgPWR.toString();
             text = "AVG PWR";
         }
         
@@ -217,13 +208,13 @@ class CyclistView extends Ui.DataField {
             value = elev;
             text = "ALT (" + (isDistMetric ? "m" : "ft") + ")";
         } else if (bottomValue == 2) {
-            value = avgHR;
+            value = avgHR.toString();
             text = "AVG HR";
         } else if (bottomValue == 3) {
-            value = avgPWR;
+            value = avgPWR.toString();
             text = "AVG PWR";
         } else if (bottomValue == 4) {
-            value = cal;
+            value = cal.toString();
             text = "CAL";
         }
         setColor(dc, Graphics.COLOR_GREEN);
